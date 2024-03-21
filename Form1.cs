@@ -16,7 +16,7 @@ namespace SpotiHotKey
                 var shortcutKeys = shortcutController.GetShortcut(i);
                 if (shortcutKeys.Length > 0)
                 {
-                    string Text = "Shortcut " + i.ToString() + " set to: " + shortcutKeys;
+                    string Text = "Shortcut " + (i + 1).ToString() + " set to: " + shortcutKeys;
                     switch (i)
                     {
                         case 0:
@@ -53,6 +53,7 @@ namespace SpotiHotKey
 
         public void OnShortcutSet(object source, OnShortcutSetArgs args)
         {
+            string Text = "Shortcut " + (args.ShortcutIdx + 1).ToString() +" set to: " + args.Shortcut;
             switch (args.ShortcutIdx)
             {
                 case 0:
@@ -75,7 +76,7 @@ namespace SpotiHotKey
         private async void OnShortcutCall(object source, OnShortcutSetArgs args)
         {
             lbl_status.Text = "Shortcut " + (args.ShortcutIdx + 1).ToString() + " pressed!";
-            Logger.LogToFile("Shortcut " + (args.ShortcutIdx + 1).ToString() + " pressed!");
+            Logger.LogToFile("Shortcut " + args.ShortcutIdx.ToString() + " pressed!");
             await spotifyController.SaveCurrentlyPlayingTrackToFavorites();
         }
 
@@ -100,25 +101,25 @@ namespace SpotiHotKey
             if (sender == btn_set_hotkey_1)
             {
                 lbl_hotkey_1.Text = "Enter Shortcut 1";
-                Logger.LogToFile("Enter Shortcut 1");
+                Logger.LogToFile("Enter Shortcut 0");
                 shortcutController.SetShortcut(0);
             }
             else if (sender == btn_set_hotkey_2)
             {
                 lbl_hotkey_2.Text = "Enter Shortcut 2";
-                Logger.LogToFile("Enter Shortcut 2");
+                Logger.LogToFile("Enter Shortcut 1");
                 shortcutController.SetShortcut(1);
             }
             else if (sender == btn_set_hotkey_3)
             {
                 lbl_hotkey_3.Text = "Enter Shortcut 3";
-                Logger.LogToFile("Enter Shortcut 3");
+                Logger.LogToFile("Enter Shortcut 2");
                 shortcutController.SetShortcut(2);
             }
             else if (sender == btn_set_hotkey_4)
             {
                 lbl_hotkey_4.Text = "Enter Shortcut";
-                Logger.LogToFile("Enter Shortcut 4");
+                Logger.LogToFile("Enter Shortcut 3");
                 shortcutController.SetShortcut(3);
             }
         }
