@@ -100,6 +100,7 @@
             // cb_saveList_1
             // 
             cb_saveList_1.DropDownStyle = ComboBoxStyle.DropDownList;
+            cb_saveList_1.Enabled = false;
             cb_saveList_1.FormattingEnabled = true;
             cb_saveList_1.Location = new Point(12, 53);
             cb_saveList_1.Name = "cb_saveList_1";

@@ -38,9 +38,12 @@ namespace SpotiHotKey
 
             shortcutController.OnShortcutSetEvent += OnShortcutSet;
             shortcutController.OnShortcutCallEvent += OnShortcutCall;
+            shortcutController.OnShortcutMessage += OnMessage;
 
             spotifyController.Start();
-            spotifyController.OnMessage += OnspotifyControllerMessage;
+            spotifyController.OnMessage += OnMessage;
+            spotifyController.OnAuthSuccess += SpotiFavKey_Load;
+            spotifyController.OnNotification += OnSpotifyNotification;
 
             notifyIcon.BalloonTipTitle = "Spotify Favorite Key";
             notifyIcon.BalloonTipText = "Spotify Favorite Key is running";
@@ -53,20 +56,24 @@ namespace SpotiHotKey
 
         public void OnShortcutSet(object source, OnShortcutSetArgs args)
         {
-            string Text = "Shortcut " + (args.ShortcutIdx + 1).ToString() +" set to: " + args.Shortcut;
+            string Text = "Shortcut " + (args.ShortcutIdx + 1).ToString() + " set to: " + args.Shortcut;
+            if (args.Shortcut == "No hotkey Set")
+            {
+                Text = args.Shortcut;
+            }
             switch (args.ShortcutIdx)
             {
                 case 0:
-                    lbl_hotkey_1.Text = "Shortcut set to: " + args.Shortcut;
+                    lbl_hotkey_1.Text = Text;
                     break;
                 case 1:
-                    lbl_hotkey_2.Text = "Shortcut set to: " + args.Shortcut;
+                    lbl_hotkey_2.Text = Text;
                     break;
                 case 2:
-                    lbl_hotkey_3.Text = "Shortcut set to: " + args.Shortcut;
+                    lbl_hotkey_3.Text = Text;
                     break;
                 case 3:
-                    lbl_hotkey_4.Text = "Shortcut set to: " + args.Shortcut;
+                    lbl_hotkey_4.Text = Text;
                     break;
             }
 
@@ -75,24 +82,102 @@ namespace SpotiHotKey
 
         private async void OnShortcutCall(object source, OnShortcutSetArgs args)
         {
-            lbl_status.Text = "Shortcut " + (args.ShortcutIdx + 1).ToString() + " pressed!";
+            //lbl_status.Text = "Shortcut " + (args.ShortcutIdx + 1).ToString() + " pressed!";
             Logger.LogToFile("Shortcut " + args.ShortcutIdx.ToString() + " pressed!");
-            await spotifyController.SaveCurrentlyPlayingTrackToFavorites();
+            var playingTrack = await spotifyController.GetCurrentlyPlayingTrackId();
+            string checkInListId = "";
+            string checkInListName = "";
+            ComboBox selectedComboBox = null;
+
+            switch (args.ShortcutIdx)
+            {
+                case 0:
+                    selectedComboBox = cb_saveList_1;
+                    break;
+                case 1:
+                    selectedComboBox = cb_saveList_2;
+                    break;
+                case 2:
+                    selectedComboBox = cb_saveList_3;
+                    break;
+                case 3:
+                    selectedComboBox = cb_saveList_4;
+                    break;
+            }
+            if (selectedComboBox != null)
+            {
+                var selectedItem = selectedComboBox.SelectedItem as dynamic;
+                checkInListId = selectedItem?.playlistId;
+                checkInListName = selectedItem?.playlistName;
+            }
+
+            if (checkInListId.Length > 0)
+            {
+                if (checkInListId == "Favorites")
+                {
+                    if (await spotifyController.IsTrackInFavoritesAsync(playingTrack.trackId))
+                    {
+                        await spotifyController.RemoveTrackFromFavoritesAsync(playingTrack.trackId, playingTrack.trackName);
+                    }
+                    else
+                    {
+                        await spotifyController.SaveCurrentlyPlayingTrackToFavorites();
+                    }
+                }
+                else
+                {
+                    if (await spotifyController.IsTrackInPlaylistAsync(checkInListId, playingTrack.trackId))
+                    {
+                        await spotifyController.RemoveTrackFromPlaylistAsync(checkInListId, checkInListName, playingTrack.trackId, playingTrack.trackName);
+                    }
+                    else
+                    {
+                        await spotifyController.AddTrackToPlaylistAsync(checkInListId, checkInListName, playingTrack.trackId, playingTrack.trackName);
+                    }
+                }
+            }
         }
 
-        private void OnspotifyControllerMessage(object source, SpotifyControllerMessage args)
+        private void OnMessage(object source, EventArgs args)
         {
+            String Text = "";
+            if (source == spotifyController)
+            {
+                var spMessage = args as SpotifyControllerMessage;
+                Text = spMessage.Message;
+            }
+            else if (source == shortcutController)
+            {
+                var spMessage = args as OnShortcutSetArgs;
+                Text = spMessage.Shortcut;
+            }
             if (lbl_status.InvokeRequired)
             {
                 lbl_status.Invoke(new MethodInvoker(delegate
                 {
-                    lbl_status.Text = args.Message;
-                    Logger.LogToFile(args.Message);
+                    lbl_status.Text = Text;
+                    Logger.LogToFile(Text);
                 }));
             }
             else
             {
-                lbl_status.Text = args.Message;
+                lbl_status.Text = Text;
+            }
+        }
+
+        private void OnSpotifyNotification(object source, SpotifyControllerMessage args)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke((MethodInvoker)(() => OnSpotifyNotification(source, args)));
+            }
+            else
+            {
+                if (ConfigManager.ShowNotifications)
+                {
+                    notifyIcon.BalloonTipText = args.Message;
+                    notifyIcon.ShowBalloonTip(1000);
+                }
             }
         }
 
@@ -129,10 +214,46 @@ namespace SpotiHotKey
             base.OnFormClosed(e);
         }
 
-        private void SpotiFavKey_Load(object sender, EventArgs e)
+        private async void SpotiFavKey_Load(object sender, EventArgs e)
         {
-            WindowState = FormWindowState.Minimized;
-            this.Hide();
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new EventHandler(SpotiFavKey_Load), new object[] { sender, e });
+            }
+            else
+            {
+                List<(string playlistName, string playlistId)> playlists = await spotifyController.GetUserPlaylistsAsync();
+                var playlistItems1 = playlists.Select(p => new { p.playlistName, p.playlistId }).ToList();
+                var playlistItems2 = playlists.Select(p => new { p.playlistName, p.playlistId }).ToList();
+                var playlistItems3 = playlists.Select(p => new { p.playlistName, p.playlistId }).ToList();
+                var playlistItems4 = playlists.Select(p => new { p.playlistName, p.playlistId }).ToList();
+                if (playlists.Count > 0)
+                {
+                    int choosenItem = 0;
+                    cb_saveList_2.DataSource = playlistItems2;
+                    cb_saveList_2.DisplayMember = "playlistName";
+                    cb_saveList_2.ValueMember = "playlistId";
+                    cb_saveList_2.SelectedItem = playlistItems2[choosenItem];
+                    if (choosenItem + 1 < playlistItems2.Count) { choosenItem++; }
+
+                    cb_saveList_3.DataSource = playlistItems3;
+                    cb_saveList_3.DisplayMember = "playlistName";
+                    cb_saveList_3.ValueMember = "playlistId";
+                    cb_saveList_3.SelectedItem = playlistItems3[choosenItem];
+                    if (choosenItem + 1 < playlistItems3.Count) { choosenItem++; }
+
+                    cb_saveList_4.DataSource = playlistItems4;
+                    cb_saveList_4.DisplayMember = "playlistName";
+                    cb_saveList_4.ValueMember = "playlistId";
+                    cb_saveList_4.SelectedItem = playlistItems4[choosenItem];
+                }
+
+                playlistItems1.Add(new { playlistName = "Favorites", playlistId = "Favorites" });
+                cb_saveList_1.DataSource = playlistItems1;
+                cb_saveList_1.DisplayMember = "playlistName";
+                cb_saveList_1.ValueMember = "playlistId";
+                cb_saveList_1.SelectedItem = playlistItems1.Last();
+            }
         }
 
         private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
@@ -150,14 +271,14 @@ namespace SpotiHotKey
                 notifyIcon.Visible = true;
                 if (ConfigManager.ShowNotifications)
                 {
+                    notifyIcon.BalloonTipText = "Spotify Favorite Key is running";
                     notifyIcon.ShowBalloonTip(1000);
                 }
             }
             else if (FormWindowState.Normal == this.WindowState)
             {
                 notifyIcon.Visible = false;
-                notifyIcon.BalloonTipText = "Spotify Favorite Key is still running";
-                cb_saveList_1.Focus();
+                cb_saveList_2.Focus();
             }
         }
 

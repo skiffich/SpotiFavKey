@@ -29,6 +29,7 @@ namespace SpotiHotKey
 
         public delegate void OnShortcutHandler(object source, OnShortcutSetArgs args);
         public event OnShortcutHandler OnShortcutSetEvent;
+        public event OnShortcutHandler OnShortcutMessage;
         public event OnShortcutHandler OnShortcutCallEvent;
 
         public ShortcutController()
@@ -87,26 +88,34 @@ namespace SpotiHotKey
                 {
                     if (settingShortcut)
                     {
-                        if (settingShortcutIdx < 0 || settingShortcutIdx >= currentKeys.Count)
+                        if (currentKeys.Count >= 2)
                         {
-
+                            shortcutKeys[settingShortcutIdx] = new List<Keys>(currentKeys); // save shortcut
+                            ConfigManager.ShortcutKeys = shortcutKeys;
+                            settingShortcut = false;
+                            currentKeys.Clear();
+                            if (OnShortcutSetEvent != null)
+                            {
+                                OnShortcutSetEvent(this, new OnShortcutSetArgs(string.Join(" + ", shortcutKeys[settingShortcutIdx]), settingShortcutIdx)); // Raise the event
+                                OnShortcutMessage(this, new OnShortcutSetArgs("Success"));
+                            }
+                            return (IntPtr)1;
                         }
-                        shortcutKeys[settingShortcutIdx] = new List<Keys>(currentKeys); // save shortcut
-                        ConfigManager.ShortcutKeys = shortcutKeys;
-                        settingShortcut = false;
-                        currentKeys.Clear();
-                        if (OnShortcutSetEvent != null)
+                        else
                         {
-                            OnShortcutSetEvent(this, new OnShortcutSetArgs(string.Join(" + ", shortcutKeys[settingShortcutIdx]), settingShortcutIdx)); // Raise the event
-                        }
-                        return (IntPtr)1;
+                            OnShortcutMessage(this, new OnShortcutSetArgs("Shortcut enter failed: Enter at least 2 keys"));
+                            OnShortcutSetEvent(this, new OnShortcutSetArgs("No hotkey Set", settingShortcutIdx));
+                            settingShortcut = false;
+                            currentKeys.Clear();
+                            return (IntPtr)1;
+                        }    
                     }
                     else
                     {
                         //if (shortcutKeys.SequenceEqual(shortcutKeys.Intersect(currentKeys)))
                         foreach (var sk in shortcutKeys)
                         {
-                            if (sk.SequenceEqual(sk.Intersect(currentKeys)))
+                            if (sk.Count > 1 && sk.SequenceEqual(sk.Intersect(currentKeys)))
                             {
                                 currentKeys.Clear();
                                 OnShortcutCallEvent(this, new OnShortcutSetArgs("", shortcutKeys.IndexOf(sk)));

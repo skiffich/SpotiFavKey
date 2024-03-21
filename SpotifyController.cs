@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Net;
 using Newtonsoft.Json;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace SpotiHotKey
 {
@@ -41,6 +43,8 @@ namespace SpotiHotKey
 
         public delegate void OnSpotifyControllerMessageHandler(object source, SpotifyControllerMessage args);
         public event OnSpotifyControllerMessageHandler OnMessage;
+        public event OnSpotifyControllerMessageHandler OnAuthSuccess;
+        public event OnSpotifyControllerMessageHandler OnNotification;
 
         public SpotifyController()
         {
@@ -110,7 +114,7 @@ namespace SpotiHotKey
         {
             {"response_type", "code"},
             {"client_id", clientId},
-            {"scope", "user-read-currently-playing user-library-modify" },
+            {"scope", "user-read-currently-playing user-library-read user-library-modify playlist-read-private playlist-modify-public playlist-modify-private" },
             {"redirect_uri", redirectUri}
         };
             var authUrl = "https://accounts.spotify.com/authorize?" + BuildQueryString(queryParams);
@@ -136,6 +140,7 @@ namespace SpotiHotKey
 
                         string responseString = "<html><h2>Authorization Successful!</h2><p>You can now close this window.</p></html>";
                         OnMessage(this, new SpotifyControllerMessage("Authorization Successful"));
+                        OnAuthSuccess(this, new SpotifyControllerMessage());
                         var buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
                         context.Response.ContentLength64 = buffer.Length;
                         context.Response.OutputStream.Write(buffer, 0, buffer.Length);
@@ -179,29 +184,145 @@ namespace SpotiHotKey
             return string.Join("&", array);
         }
 
-        private async Task<string> GetCurrentlyPlayingTrack()
+        public async Task<(string trackName, string artist, string trackId)> GetCurrentlyPlayingTrackId()
         {
+            string trackName = "";
+            string artist = "";
+            string trackId = "";
             try
             {
-
-                if (string.IsNullOrEmpty(accessToken))
-                {
-                    OnMessage(this, new SpotifyControllerMessage("Access Token is not available. Authenticate first."));
-                    return null;
-                    // throw new InvalidOperationException("Access Token is not available. Authenticate first.");
-                }
-
                 using var client = new WebClient();
                 client.Headers[HttpRequestHeader.Authorization] = "Bearer " + accessToken;
                 var result = await client.DownloadStringTaskAsync("https://api.spotify.com/v1/me/player/currently-playing");
                 dynamic currentlyPlaying = JsonConvert.DeserializeObject<dynamic>(result);
-                return currentlyPlaying.item.name;
+                if (currentlyPlaying != null)
+                {
+                    trackName = currentlyPlaying.item.name;
+                    artist = currentlyPlaying.item.artists[0].name;
+                    trackId = currentlyPlaying.item.id;
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                Logger.LogToFile("GetCurrentlyPlayingTrack exception");
+                Logger.LogToFile($"GetCurrentlyPlayingTrackId exception: {ex.Message}");
+                OnMessage(this, new SpotifyControllerMessage($"Get Currently Playing Track failed"));
             }
-            return "";
+            return (trackName, artist, trackId);
+        }
+
+        public async Task<List<(string playlistName, string playlistId)>> GetUserPlaylistsAsync()
+        {
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                Logger.LogToFile("Access Token is not available. Authenticate first.");
+                return new List<(string, string)>();
+            }
+
+            try
+            {
+                using var client = new WebClient();
+                client.Headers[HttpRequestHeader.Authorization] = "Bearer " + accessToken;
+                var result = await client.DownloadStringTaskAsync("https://api.spotify.com/v1/me/playlists");
+                dynamic playlists = JsonConvert.DeserializeObject<dynamic>(result);
+
+                List<(string, string)> resultList = new List<(string, string)>(); ;
+
+                if (playlists != null && playlists.items != null)
+                {
+                    foreach (var playlist in playlists.items)
+                    {
+                        string playlistName = playlist.name;
+                        string playlistId = playlist.id;
+                        resultList.Add((playlistName, playlistId));
+                        // Here, you can collect or print out the playlist information as needed
+                        //OnMessage(this, new SpotifyControllerMessage($"Playlist: {playlistName} (ID: {playlistId})"));
+                    }
+
+                    return resultList;
+                }
+                else
+                {
+                    Logger.LogToFile("No playlists found or failed to retrieve playlists.");
+                    OnMessage(this, new SpotifyControllerMessage("No playlists found or failed to retrieve playlists."));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogToFile($"GetUserPlaylistsAsync exception: {ex.Message}");
+                OnMessage(this, new SpotifyControllerMessage("Failed to retrieve playlists.", false));
+            }
+            return new List<(string, string)>();
+        }
+
+        public async Task<bool> IsTrackInPlaylistAsync(string playlistId, string trackId)
+        {
+            try
+            {
+                using var client = new WebClient();
+                client.Headers[HttpRequestHeader.Authorization] = "Bearer " + accessToken;
+                var result = await client.DownloadStringTaskAsync($"https://api.spotify.com/v1/playlists/{playlistId}/tracks");
+                dynamic playlistTracks = JsonConvert.DeserializeObject<dynamic>(result);
+
+                foreach (var item in playlistTracks.items)
+                {
+                    if (item.track.id == trackId)
+                    {
+                        return true; // Track found in playlist
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogToFile($"IsTrackInPlaylistAsync exception: {ex.Message}");
+                OnMessage(this, new SpotifyControllerMessage($"IsTrackInPlaylistAsync failed"));
+            }
+
+            return false; // Track not found in playlist or an error occurred
+        }
+
+        public async Task AddTrackToPlaylistAsync(string playlistId, string playlistName, string trackId, string trackName)
+        {
+            try
+            {
+                string trackUri = $"spotify:track:{trackId}";
+                using var client = new WebClient();
+                client.Headers[HttpRequestHeader.Authorization] = "Bearer " + accessToken;
+                client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                string payload = JsonConvert.SerializeObject(new { uris = new[] { trackUri } });
+                await client.UploadStringTaskAsync($"https://api.spotify.com/v1/playlists/{playlistId}/tracks", "POST", payload);
+
+                Logger.LogToFile($"AddTrackToPlaylistAsync : Track {trackName} added to playlist {playlistName} successfully.");
+                OnMessage(this, new SpotifyControllerMessage($"Track {trackName} added to playlist {playlistName} successfully."));
+                OnNotification(this, new SpotifyControllerMessage($"Track {trackName} added to playlist {playlistName}"));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogToFile($"AddTrackToPlaylistAsync exception: {ex.Message}");
+                OnMessage(this, new SpotifyControllerMessage($"Track add failed"));
+            }
+        }
+
+        public async Task RemoveTrackFromPlaylistAsync(string playlistId, string playlistName, string trackId, string trackName)
+        {
+            try
+            {
+                string trackUri = $"spotify:track:{trackId}";
+                using var client = new WebClient();
+                client.Headers[HttpRequestHeader.Authorization] = "Bearer " + accessToken;
+                client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                string payload = JsonConvert.SerializeObject(new { tracks = new[] { new { uri = trackUri } } });
+                await client.UploadStringTaskAsync($"https://api.spotify.com/v1/playlists/{playlistId}/tracks", "DELETE", payload);
+
+                // Optionally, notify via OnMessage
+                OnMessage(this, new SpotifyControllerMessage($"Track {trackName} removed from playlist {playlistName} successfully."));
+                OnNotification(this, new SpotifyControllerMessage($"Track {trackName} removed from playlist {playlistName}"));
+                Logger.LogToFile($"RemoveTrackFromPlaylistAsync : Track { trackName} removed from playlist { playlistName} successfully.");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogToFile($"RemoveTrackFromPlaylistAsync exception: {ex.Message}");
+                OnMessage(this, new SpotifyControllerMessage($"Track remove failed"));
+            }
         }
 
         public async Task SaveCurrentlyPlayingTrackToFavorites()
@@ -229,37 +350,67 @@ namespace SpotiHotKey
                 client.Headers[HttpRequestHeader.ContentType] = "application/json";
                 var response = await client.UploadStringTaskAsync($"https://api.spotify.com/v1/me/tracks?ids={currentlyPlayingTrackId}", "PUT", "");
                 OnMessage(this, new SpotifyControllerMessage($"'{trackName}' by '{artist}' has been added to your favorites."));
+                OnNotification(this, new SpotifyControllerMessage($"'{trackName}' by '{artist}' has been added to your favorites."));
                 // If the response is successful, the track has been added to the favorites
             }
-            catch
+            catch (Exception ex)
             {
-                Logger.LogToFile("SaveCurrentlyPlayingTrackToFavorites exception");
+                Logger.LogToFile($"SaveCurrentlyPlayingTrackToFavorites exception: {ex.Message}");
             }
         }
-
-        private async Task<(string trackName, string artist, string trackId)> GetCurrentlyPlayingTrackId()
+        
+        public async Task RemoveTrackFromFavoritesAsync(string trackId, string trackName)
         {
-            string trackName = "";
-            string artist = "";
-            string trackId = "";
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                OnMessage(this, new SpotifyControllerMessage("Access Token is not available. Authenticate first.", false));
+                return;
+            }
+
             try
             {
                 using var client = new WebClient();
                 client.Headers[HttpRequestHeader.Authorization] = "Bearer " + accessToken;
-                var result = await client.DownloadStringTaskAsync("https://api.spotify.com/v1/me/player/currently-playing");
-                dynamic currentlyPlaying = JsonConvert.DeserializeObject<dynamic>(result);
-                if (currentlyPlaying != null)
+                client.Headers[HttpRequestHeader.ContentType] = "application/json";
+                await client.UploadStringTaskAsync($"https://api.spotify.com/v1/me/tracks?ids={trackId}", "DELETE", string.Empty);
+
+                OnMessage(this, new SpotifyControllerMessage($"Track {trackName} has been removed from your favorites."));
+                OnNotification(this, new SpotifyControllerMessage($"Track {trackName} has been removed from your favorites."));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogToFile($"RemoveTrackFromFavoritesAsync exception: {ex.Message}");
+                OnMessage(this, new SpotifyControllerMessage("Failed to remove track from favorites.", false));
+            }
+        }
+
+        public async Task<bool> IsTrackInFavoritesAsync(string trackId)
+        {
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                OnMessage(this, new SpotifyControllerMessage("Access Token is not available. Authenticate first.", false));
+                return false;
+            }
+
+            try
+            {
+                using var client = new WebClient();
+                client.Headers[HttpRequestHeader.Authorization] = "Bearer " + accessToken;
+                var result = await client.DownloadStringTaskAsync($"https://api.spotify.com/v1/me/tracks/contains?ids={trackId}");
+                bool[] trackIsInFavorites = JsonConvert.DeserializeObject<bool[]>(result);
+
+                if (trackIsInFavorites.Length > 0)
                 {
-                    trackName = currentlyPlaying.item.name;
-                    artist = currentlyPlaying.item.artists[0].name;
-                    trackId = currentlyPlaying.item.id;
+                    return trackIsInFavorites[0];
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                Logger.LogToFile("GetCurrentlyPlayingTrackId exception");
+                Logger.LogToFile($"IsTrackInFavoritesAsync exception: {ex.Message}");
+                OnMessage(this, new SpotifyControllerMessage($"Failed to check if track {trackId} is in favorites.", false));
             }
-            return (trackName, artist, trackId);
+
+            return false; // Якщо виникла помилка або трек не знайдено серед улюблених, повертаємо false
         }
 
         ~SpotifyController() 
