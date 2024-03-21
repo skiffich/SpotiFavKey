@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace SpotiHotKey
@@ -7,9 +8,12 @@ namespace SpotiHotKey
     {
         public string Shortcut { get; private set; }
 
-        public OnShortcutSetArgs(string shortcut = "")
+        public int ShortcutIdx { get; private set; }
+
+        public OnShortcutSetArgs(string shortcut = "", int shortcutIdx = 0)
         {
             Shortcut = shortcut;
+            ShortcutIdx = shortcutIdx;
         }
     }
 
@@ -18,8 +22,10 @@ namespace SpotiHotKey
         private IntPtr hookID = IntPtr.Zero;
         private NativeMethods.LowLevelKeyboardProc proc;
         private List<Keys> currentKeys = new List<Keys>();
-        private List<Keys> shortcutKeys = new List<Keys>();
+        private List<List<Keys>> shortcutKeys = new List<List<Keys>>();
         private bool settingShortcut = false;
+        private int settingShortcutIdx = 0;
+        private const int MAX_SHORTCUTS = 4;
 
         public delegate void OnShortcutHandler(object source, OnShortcutSetArgs args);
         public event OnShortcutHandler OnShortcutSetEvent;
@@ -33,15 +39,20 @@ namespace SpotiHotKey
                 hookID = SetHook(proc);
             }
             shortcutKeys = ConfigManager.ShortcutKeys;
+            for (int i = shortcutKeys.Count; i < MAX_SHORTCUTS; i++)
+            {
+                shortcutKeys.Add(new List<Keys>());
+            }
         }
 
-        public void SetShortcut()
+        public void SetShortcut(int ShortcutIndex = 0)
         {
+            settingShortcutIdx = ShortcutIndex;
             settingShortcut = true;
         }
-        public string GetShortcut()
+        public string GetShortcut(int ShortcutIndex = 0)
         {
-            return string.Join(" + ", shortcutKeys);
+            return string.Join(" + ", shortcutKeys[ShortcutIndex]);
         }
 
         private IntPtr SetHook(NativeMethods.LowLevelKeyboardProc proc)
@@ -76,22 +87,30 @@ namespace SpotiHotKey
                 {
                     if (settingShortcut)
                     {
-                        shortcutKeys = new List<Keys>(currentKeys); // save shortcut
+                        if (settingShortcutIdx < 0 || settingShortcutIdx >= currentKeys.Count)
+                        {
+
+                        }
+                        shortcutKeys[settingShortcutIdx] = new List<Keys>(currentKeys); // save shortcut
                         ConfigManager.ShortcutKeys = shortcutKeys;
                         settingShortcut = false;
                         currentKeys.Clear();
                         if (OnShortcutSetEvent != null)
                         {
-                            OnShortcutSetEvent(this, new OnShortcutSetArgs(string.Join(" + ", shortcutKeys))); // Raise the event
+                            OnShortcutSetEvent(this, new OnShortcutSetArgs(string.Join(" + ", shortcutKeys[settingShortcutIdx]), settingShortcutIdx)); // Raise the event
                         }
                         return (IntPtr)1;
                     }
                     else
                     {
-                        if (shortcutKeys.SequenceEqual(shortcutKeys.Intersect(currentKeys)))
+                        //if (shortcutKeys.SequenceEqual(shortcutKeys.Intersect(currentKeys)))
+                        foreach (var sk in shortcutKeys)
                         {
-                            currentKeys.Clear();
-                            OnShortcutCallEvent(this, new OnShortcutSetArgs());
+                            if (sk.SequenceEqual(sk.Intersect(currentKeys)))
+                            {
+                                currentKeys.Clear();
+                                OnShortcutCallEvent(this, new OnShortcutSetArgs("", shortcutKeys.IndexOf(sk)));
+                            }
                         }
                         currentKeys.Clear();
                     }

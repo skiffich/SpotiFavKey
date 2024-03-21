@@ -17,9 +17,11 @@ namespace SpotiHotKey
 
         private class Config
         {
-            public List<Keys> ShortcutKeys { get; set; }
+            public List<List<Keys>> ShortcutKeys { get; set; }
             public string ClientId { get; set; }
             public string ClientSecret { get; set; }
+
+            public bool ShowNotifications { get; set; }
         }
 
         private static void LoadConfig()
@@ -34,19 +36,30 @@ namespace SpotiHotKey
                 // Initialize with default values if config.json does not exist
                 config = new Config
                 {
-                    ShortcutKeys = new List<Keys>(),
+                    ShortcutKeys = new List<List<Keys>>(),
                     ClientId = "",
-                    ClientSecret = ""
+                    ClientSecret = "",
+                    ShowNotifications = true
                 };
             }
         }
 
-        public static List<Keys> ShortcutKeys
+        public static List<List<Keys>> ShortcutKeys
         {
             get => config.ShortcutKeys;
             set
             {
                 config.ShortcutKeys = value;
+                SaveConfig();
+            }
+        }
+
+        public static bool ShowNotifications
+        {
+            get => config.ShowNotifications;
+            set
+            {
+                config.ShowNotifications = value;
                 SaveConfig();
             }
         }
