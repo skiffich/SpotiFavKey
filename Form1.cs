@@ -1,11 +1,13 @@
+using System.Windows.Forms;
+
 namespace SpotiHotKey
 {
-    public partial class Form1 : Form
+    public partial class SpotiFavKey : Form
     {
         private ShortcutController shortcutController = new ShortcutController();
         private SpotifyController spotifyController = new SpotifyController();
 
-        public Form1()
+        public SpotiFavKey()
         {
             InitializeComponent();
 
@@ -21,6 +23,12 @@ namespace SpotiHotKey
 
             spotifyController.Start();
             spotifyController.OnMessage += OnspotifyControllerMessage;
+
+            notifyIcon.BalloonTipTitle = "Spotify Favorite Key";
+            notifyIcon.BalloonTipText = "Spotify Favorite Key is running";
+            notifyIcon.Text = "Spotify Favorite Key";
+
+            this.Hide();
         }
 
         public void OnShortcutSet(object source, OnShortcutSetArgs args)
@@ -62,6 +70,43 @@ namespace SpotiHotKey
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             base.OnFormClosed(e);
+        }
+
+        private void SpotiFavKey_Load(object sender, EventArgs e)
+        {
+            WindowState = FormWindowState.Minimized;
+            this.Hide();
+        }
+
+        private void notifyIcon_MouseClick(object sender, MouseEventArgs e)
+        {
+            this.Show();
+            notifyIcon.Visible = false;
+            WindowState = FormWindowState.Normal;
+        }
+
+        private void SpotiFavKey_Resize(object sender, EventArgs e)
+        {
+            if (WindowState == FormWindowState.Minimized)
+            {
+                this.Hide();
+                notifyIcon.Visible = true;
+                notifyIcon.ShowBalloonTip(1000);
+            }
+            else if (FormWindowState.Normal == this.WindowState)
+            {
+                notifyIcon.Visible = false;
+                notifyIcon.BalloonTipText = "Spotify Favorite Key is still running";
+            }
+        }
+
+        private void SpotiFavKey_Shown(object sender, EventArgs e)
+        {
+            //to minimize window
+            this.WindowState = FormWindowState.Minimized;
+
+            //to hide from taskbar
+            this.Hide();
         }
     }
 }

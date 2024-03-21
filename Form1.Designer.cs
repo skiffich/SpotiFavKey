@@ -1,6 +1,6 @@
 ﻿namespace SpotiHotKey
 {
-    partial class Form1
+    partial class SpotiFavKey
     {
         /// <summary>
         ///  Required designer variable.
@@ -28,11 +28,13 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SpotiFavKey));
             label1 = new Label();
             btn_set_hotkey = new Button();
             lbl_hotkey = new Label();
             lbl_status = new Label();
+            notifyIcon = new NotifyIcon(components);
             SuspendLayout();
             // 
             // label1
@@ -77,7 +79,12 @@
             lbl_status.TextAlign = ContentAlignment.MiddleCenter;
             lbl_status.UseMnemonic = false;
             // 
-            // Form1
+            // notifyIcon
+            // 
+            notifyIcon.Icon = (Icon)resources.GetObject("notifyIcon.Icon");
+            notifyIcon.MouseClick += notifyIcon_MouseClick;
+            // 
+            // SpotiFavKey
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -88,14 +95,17 @@
             Controls.Add(lbl_hotkey);
             Controls.Add(label1);
             Controls.Add(btn_set_hotkey);
-            FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MaximumSize = new Size(450, 350);
             MinimumSize = new Size(450, 350);
-            Name = "Form1";
+            Name = "SpotiFavKey";
             SizeGripStyle = SizeGripStyle.Hide;
             Text = "Spotify Favorites Hotkey Setter";
+            Load += SpotiFavKey_Load;
+            Shown += SpotiFavKey_Shown;
+            Resize += SpotiFavKey_Resize;
             ResumeLayout(false);
         }
 
@@ -105,5 +115,6 @@
         private Button btn_set_hotkey;
         private Label lbl_hotkey;
         private Label lbl_status;
+        private NotifyIcon notifyIcon;
     }
 }
