@@ -72,7 +72,7 @@ namespace SpotiHotKey
                 int vkCode = Marshal.ReadInt32(lParam);
                 Keys key = (Keys)vkCode;
 
-                if (wParam == (IntPtr)NativeMethods.WM_KEYDOWN)
+                if (wParam == (IntPtr)NativeMethods.WM_KEYDOWN || wParam == (IntPtr)NativeMethods.WM_SYSKEYDOWN)
                 {
                     if (settingShortcut && !currentKeys.Contains(key))
                     {
@@ -84,7 +84,7 @@ namespace SpotiHotKey
                         currentKeys.Add(key);
                     }
                 }
-                else if (wParam == (IntPtr)NativeMethods.WM_KEYUP)
+                else if (wParam == (IntPtr)NativeMethods.WM_KEYUP || wParam == (IntPtr)NativeMethods.WM_SYSKEYUP)
                 {
                     if (settingShortcut)
                     {
@@ -122,6 +122,7 @@ namespace SpotiHotKey
                             }
                         }
                         currentKeys.Clear();
+                        return (IntPtr)1;
                     }
                 }
             }
