@@ -46,7 +46,7 @@
             lbl_hotkey_4 = new Label();
             btn_set_hotkey_4 = new Button();
             showNotificationsCheck = new CheckBox();
-            label2 = new Label();
+            RunOnStartupCheckBox = new CheckBox();
             SuspendLayout();
             // 
             // label1
@@ -54,18 +54,20 @@
             label1.Dock = DockStyle.Top;
             label1.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 204);
             label1.Location = new Point(0, 0);
+            label1.Margin = new Padding(4, 0, 4, 0);
             label1.Name = "label1";
-            label1.Padding = new Padding(0, 20, 0, 0);
-            label1.Size = new Size(632, 40);
+            label1.Padding = new Padding(0, 25, 0, 0);
+            label1.Size = new Size(785, 50);
             label1.TabIndex = 1;
             label1.Text = "Press the button below to set your Spotify Favorites Hotkey.";
             label1.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // btn_set_hotkey_1
             // 
-            btn_set_hotkey_1.Location = new Point(332, 51);
+            btn_set_hotkey_1.Location = new Point(415, 64);
+            btn_set_hotkey_1.Margin = new Padding(4);
             btn_set_hotkey_1.Name = "btn_set_hotkey_1";
-            btn_set_hotkey_1.Size = new Size(100, 30);
+            btn_set_hotkey_1.Size = new Size(125, 38);
             btn_set_hotkey_1.TabIndex = 0;
             btn_set_hotkey_1.Text = "Set hotkey";
             btn_set_hotkey_1.UseVisualStyleBackColor = true;
@@ -73,9 +75,10 @@
             // 
             // lbl_hotkey_1
             // 
-            lbl_hotkey_1.Location = new Point(438, 40);
+            lbl_hotkey_1.Location = new Point(548, 50);
+            lbl_hotkey_1.Margin = new Padding(4, 0, 4, 0);
             lbl_hotkey_1.Name = "lbl_hotkey_1";
-            lbl_hotkey_1.Size = new Size(194, 52);
+            lbl_hotkey_1.Size = new Size(242, 65);
             lbl_hotkey_1.TabIndex = 2;
             lbl_hotkey_1.Text = "No hotkey set.";
             lbl_hotkey_1.TextAlign = ContentAlignment.MiddleCenter;
@@ -83,9 +86,10 @@
             // lbl_status
             // 
             lbl_status.Dock = DockStyle.Bottom;
-            lbl_status.Location = new Point(0, 257);
+            lbl_status.Location = new Point(0, 310);
+            lbl_status.Margin = new Padding(4, 0, 4, 0);
             lbl_status.Name = "lbl_status";
-            lbl_status.Size = new Size(632, 46);
+            lbl_status.Size = new Size(785, 58);
             lbl_status.TabIndex = 3;
             lbl_status.Text = "Status will appear here";
             lbl_status.TextAlign = ContentAlignment.MiddleCenter;
@@ -102,34 +106,38 @@
             cb_saveList_1.DropDownStyle = ComboBoxStyle.DropDownList;
             cb_saveList_1.Enabled = false;
             cb_saveList_1.FormattingEnabled = true;
-            cb_saveList_1.Location = new Point(12, 53);
+            cb_saveList_1.Location = new Point(15, 66);
+            cb_saveList_1.Margin = new Padding(4);
             cb_saveList_1.Name = "cb_saveList_1";
-            cb_saveList_1.Size = new Size(314, 28);
+            cb_saveList_1.Size = new Size(392, 33);
             cb_saveList_1.TabIndex = 4;
             // 
             // cb_saveList_2
             // 
             cb_saveList_2.DropDownStyle = ComboBoxStyle.DropDownList;
             cb_saveList_2.FormattingEnabled = true;
-            cb_saveList_2.Location = new Point(12, 105);
+            cb_saveList_2.Location = new Point(15, 131);
+            cb_saveList_2.Margin = new Padding(4);
             cb_saveList_2.Name = "cb_saveList_2";
-            cb_saveList_2.Size = new Size(314, 28);
+            cb_saveList_2.Size = new Size(392, 33);
             cb_saveList_2.TabIndex = 7;
             // 
             // lbl_hotkey_2
             // 
-            lbl_hotkey_2.Location = new Point(438, 92);
+            lbl_hotkey_2.Location = new Point(548, 115);
+            lbl_hotkey_2.Margin = new Padding(4, 0, 4, 0);
             lbl_hotkey_2.Name = "lbl_hotkey_2";
-            lbl_hotkey_2.Size = new Size(194, 52);
+            lbl_hotkey_2.Size = new Size(242, 65);
             lbl_hotkey_2.TabIndex = 6;
             lbl_hotkey_2.Text = "No hotkey set.";
             lbl_hotkey_2.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // btn_set_hotkey_2
             // 
-            btn_set_hotkey_2.Location = new Point(332, 103);
+            btn_set_hotkey_2.Location = new Point(415, 129);
+            btn_set_hotkey_2.Margin = new Padding(4);
             btn_set_hotkey_2.Name = "btn_set_hotkey_2";
-            btn_set_hotkey_2.Size = new Size(100, 30);
+            btn_set_hotkey_2.Size = new Size(125, 38);
             btn_set_hotkey_2.TabIndex = 5;
             btn_set_hotkey_2.Text = "Set hotkey";
             btn_set_hotkey_2.UseVisualStyleBackColor = true;
@@ -139,25 +147,28 @@
             // 
             cb_saveList_3.DropDownStyle = ComboBoxStyle.DropDownList;
             cb_saveList_3.FormattingEnabled = true;
-            cb_saveList_3.Location = new Point(12, 157);
+            cb_saveList_3.Location = new Point(15, 196);
+            cb_saveList_3.Margin = new Padding(4);
             cb_saveList_3.Name = "cb_saveList_3";
-            cb_saveList_3.Size = new Size(314, 28);
+            cb_saveList_3.Size = new Size(392, 33);
             cb_saveList_3.TabIndex = 10;
             // 
             // lbl_hotkey_3
             // 
-            lbl_hotkey_3.Location = new Point(438, 144);
+            lbl_hotkey_3.Location = new Point(548, 180);
+            lbl_hotkey_3.Margin = new Padding(4, 0, 4, 0);
             lbl_hotkey_3.Name = "lbl_hotkey_3";
-            lbl_hotkey_3.Size = new Size(194, 52);
+            lbl_hotkey_3.Size = new Size(242, 65);
             lbl_hotkey_3.TabIndex = 9;
             lbl_hotkey_3.Text = "No hotkey set.";
             lbl_hotkey_3.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // btn_set_hotkey_3
             // 
-            btn_set_hotkey_3.Location = new Point(332, 155);
+            btn_set_hotkey_3.Location = new Point(415, 194);
+            btn_set_hotkey_3.Margin = new Padding(4);
             btn_set_hotkey_3.Name = "btn_set_hotkey_3";
-            btn_set_hotkey_3.Size = new Size(100, 30);
+            btn_set_hotkey_3.Size = new Size(125, 38);
             btn_set_hotkey_3.TabIndex = 8;
             btn_set_hotkey_3.Text = "Set hotkey";
             btn_set_hotkey_3.UseVisualStyleBackColor = true;
@@ -167,25 +178,28 @@
             // 
             cb_saveList_4.DropDownStyle = ComboBoxStyle.DropDownList;
             cb_saveList_4.FormattingEnabled = true;
-            cb_saveList_4.Location = new Point(12, 209);
+            cb_saveList_4.Location = new Point(15, 261);
+            cb_saveList_4.Margin = new Padding(4);
             cb_saveList_4.Name = "cb_saveList_4";
-            cb_saveList_4.Size = new Size(314, 28);
+            cb_saveList_4.Size = new Size(392, 33);
             cb_saveList_4.TabIndex = 13;
             // 
             // lbl_hotkey_4
             // 
-            lbl_hotkey_4.Location = new Point(438, 196);
+            lbl_hotkey_4.Location = new Point(548, 245);
+            lbl_hotkey_4.Margin = new Padding(4, 0, 4, 0);
             lbl_hotkey_4.Name = "lbl_hotkey_4";
-            lbl_hotkey_4.Size = new Size(194, 52);
+            lbl_hotkey_4.Size = new Size(242, 65);
             lbl_hotkey_4.TabIndex = 12;
             lbl_hotkey_4.Text = "No hotkey set.";
             lbl_hotkey_4.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // btn_set_hotkey_4
             // 
-            btn_set_hotkey_4.Location = new Point(332, 207);
+            btn_set_hotkey_4.Location = new Point(415, 259);
+            btn_set_hotkey_4.Margin = new Padding(4);
             btn_set_hotkey_4.Name = "btn_set_hotkey_4";
-            btn_set_hotkey_4.Size = new Size(100, 30);
+            btn_set_hotkey_4.Size = new Size(125, 38);
             btn_set_hotkey_4.TabIndex = 11;
             btn_set_hotkey_4.Text = "Set hotkey";
             btn_set_hotkey_4.UseVisualStyleBackColor = true;
@@ -194,31 +208,36 @@
             // showNotificationsCheck
             // 
             showNotificationsCheck.AutoSize = true;
-            showNotificationsCheck.Location = new Point(613, -1);
+            showNotificationsCheck.Location = new Point(588, 0);
+            showNotificationsCheck.Margin = new Padding(4);
             showNotificationsCheck.Name = "showNotificationsCheck";
-            showNotificationsCheck.Size = new Size(101, 24);
+            showNotificationsCheck.RightToLeft = RightToLeft.Yes;
+            showNotificationsCheck.Size = new Size(184, 29);
             showNotificationsCheck.TabIndex = 14;
-            showNotificationsCheck.Text = "checkBox1";
+            showNotificationsCheck.Text = "Show notifications";
             showNotificationsCheck.UseVisualStyleBackColor = true;
             showNotificationsCheck.CheckStateChanged += showNotificationsCheck_CheckStateChanged;
             // 
-            // label2
+            // RunOnStartupCheckBox
             // 
-            label2.AutoSize = true;
-            label2.Location = new Point(476, -1);
-            label2.Name = "label2";
-            label2.Size = new Size(131, 20);
-            label2.TabIndex = 15;
-            label2.Text = "Show notifications";
+            RunOnStartupCheckBox.AutoSize = true;
+            RunOnStartupCheckBox.Location = new Point(13, 0);
+            RunOnStartupCheckBox.Margin = new Padding(4);
+            RunOnStartupCheckBox.Name = "RunOnStartupCheckBox";
+            RunOnStartupCheckBox.Size = new Size(156, 29);
+            RunOnStartupCheckBox.TabIndex = 16;
+            RunOnStartupCheckBox.Text = "Run on startup";
+            RunOnStartupCheckBox.UseVisualStyleBackColor = true;
+            RunOnStartupCheckBox.CheckedChanged += RunOnStartupCheckBox_CheckedChanged;
             // 
             // SpotiFavKey
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.LightGreen;
             BackgroundImageLayout = ImageLayout.Zoom;
-            ClientSize = new Size(632, 303);
-            Controls.Add(label2);
+            ClientSize = new Size(785, 368);
+            Controls.Add(RunOnStartupCheckBox);
             Controls.Add(showNotificationsCheck);
             Controls.Add(cb_saveList_4);
             Controls.Add(lbl_hotkey_4);
@@ -236,9 +255,10 @@
             Controls.Add(btn_set_hotkey_1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
+            Margin = new Padding(4);
             MaximizeBox = false;
-            MaximumSize = new Size(650, 350);
-            MinimumSize = new Size(650, 350);
+            MaximumSize = new Size(807, 424);
+            MinimumSize = new Size(807, 424);
             Name = "SpotiFavKey";
             SizeGripStyle = SizeGripStyle.Hide;
             Text = "Spotify Favorites Hotkey Setter";
@@ -267,6 +287,6 @@
         private Label lbl_hotkey_4;
         private Button btn_set_hotkey_4;
         private CheckBox showNotificationsCheck;
-        private Label label2;
+        private CheckBox RunOnStartupCheckBox;
     }
 }
