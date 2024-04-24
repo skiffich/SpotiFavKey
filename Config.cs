@@ -7,7 +7,7 @@ namespace SpotiHotKey
 {
     public static class ConfigManager
     {
-        private static readonly string configFilePath = "config.json";
+        private static readonly string configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SpotiHotKey", "config.json");
         private static Config config;
 
         static ConfigManager()
@@ -70,6 +70,7 @@ namespace SpotiHotKey
 
         private static void SaveConfig()
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(configFilePath));
             string json = JsonConvert.SerializeObject(config, Formatting.Indented);
             File.WriteAllText(configFilePath, json);
         }

@@ -1,4 +1,6 @@
 using System.Windows.Forms;
+using Microsoft.Win32;
+using System;
 
 namespace SpotiHotKey
 {
@@ -6,6 +8,8 @@ namespace SpotiHotKey
     {
         private ShortcutController shortcutController = new ShortcutController();
         private SpotifyController spotifyController = new SpotifyController();
+
+        private const string appName = "SpotiFavKey";
 
         public SpotiFavKey()
         {
@@ -50,6 +54,8 @@ namespace SpotiHotKey
             notifyIcon.Text = "Spotify Favorite Key";
 
             showNotificationsCheck.Checked = ConfigManager.ShowNotifications;
+
+            RunOnStartupCheckBox.Checked = IsAutoStartEnabled();
 
             this.Hide();
         }
@@ -304,6 +310,49 @@ namespace SpotiHotKey
         private void showNotificationsCheck_CheckStateChanged(object sender, EventArgs e)
         {
             ConfigManager.ShowNotifications = showNotificationsCheck.Checked;
+        }
+
+        private void RunOnStartupCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            if (RunOnStartupCheckBox.Checked)
+                EnableAutoStart();
+            else
+                DisableAutoStart();
+        }
+
+        private bool IsAutoStartEnabled()
+        {
+            var path = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(path, true))
+            {
+                Logger.LogToFile("Checking if autorun is enabled");
+                return key.GetValue(appName) != null;
+            }
+            Logger.LogToFile("Failed OpenSubKey while IsAutoStartEnabled");
+        }
+
+        private void EnableAutoStart()
+        {
+            var path = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(path, true))
+            {
+                Logger.LogToFile("Enabling autorun");
+                key.SetValue(appName, Application.ExecutablePath);
+                return;
+            }
+            Logger.LogToFile("Failed OpenSubKey while EnableAutoStart");
+        }
+
+        private void DisableAutoStart()
+        {
+            var path = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(path, true))
+            {
+                Logger.LogToFile("Disabling autorun");
+                key.DeleteValue(appName, false);
+                return;
+            }
+            Logger.LogToFile("Failed OpenSubKey while DisableAutoStart");
         }
     }
 }

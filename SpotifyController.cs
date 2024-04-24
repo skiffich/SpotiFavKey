@@ -34,7 +34,7 @@ namespace SpotiHotKey
 
     public class SpotifyController
     {
-        private const string TokenInfoFile = "token_info.json";
+        private string TokenInfoFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "SpotiHotKey", "token_info.json");
         private readonly string clientId = "1747b3ed9d0740c9a6ff29f1ca6997b8";
         private readonly string clientSecret = "c5ca7a8a2751480a86d63737f28e4c99";
         private readonly string redirectUri = "http://localhost:5000/callback";
@@ -57,6 +57,8 @@ namespace SpotiHotKey
 
         public void Start()
         {
+            Logger.LogToFile("SpotifyController Start");
+
             var tokenInfo = LoadTokenInfo();
             if (tokenInfo != null)
             {
@@ -90,8 +92,10 @@ namespace SpotiHotKey
 
         private async Task RefreshTokenIfExpired(TokenInfo tokenInfo)
         {
+            Logger.LogToFile("SpotifyController RefreshTokenIfExpired");
             if (tokenInfo == null || !tokenInfo.IsExpired())
             {
+                Logger.LogToFile("SpotifyController RefreshTokenIfExpired tokenInfo == null || !tokenInfo.IsExpired()");
                 return;
             }
 
@@ -105,25 +109,33 @@ namespace SpotiHotKey
             accessToken = tokenResponse.AccessToken;
             SaveTokenInfo(tokenResponse); // Save the new token info
             OnMessage(this, new SpotifyControllerMessage("Token refreshed"));
+            Logger.LogToFile("The SpotiFavKey Token refreshed");
         }
 
         private void Authenticate()
         {
-            // Generate the Spotify authentication URL
-            var queryParams = new System.Collections.Generic.Dictionary<string, string>
-        {
-            {"response_type", "code"},
-            {"client_id", clientId},
-            {"scope", "user-read-currently-playing user-library-read user-library-modify playlist-read-private playlist-modify-public playlist-modify-private" },
-            {"redirect_uri", redirectUri}
-        };
-            var authUrl = "https://accounts.spotify.com/authorize?" + BuildQueryString(queryParams);
+            try
+            {
+                // Generate the Spotify authentication URL
+                var queryParams = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    {"response_type", "code"},
+                    {"client_id", clientId},
+                    {"scope", "user-read-currently-playing user-library-read user-library-modify playlist-read-private playlist-modify-public playlist-modify-private" },
+                    {"redirect_uri", redirectUri}
+                };
+                var authUrl = "https://accounts.spotify.com/authorize?" + BuildQueryString(queryParams);
 
-            // Open the user's browser to request authorization
-            Process.Start(new ProcessStartInfo(authUrl) { UseShellExecute = true });
+                // Open the user's browser to request authorization
+                Process.Start(new ProcessStartInfo(authUrl) { UseShellExecute = true });
 
-            // Start listening for the redirect callback
-            ListenForAuthResponse();
+                // Start listening for the redirect callback
+                ListenForAuthResponse();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogToFile($"SpotifyController Authenticate exception: {ex.Message}");
+            }
         }
 
         private async void ListenForAuthResponse()
@@ -136,7 +148,15 @@ namespace SpotiHotKey
                     if (context.Request.Url.AbsolutePath == "/callback")
                     {
                         var code = context.Request.QueryString["code"];
-                        await ExchangeCodeForToken(code);
+                        try 
+                        {
+                            await ExchangeCodeForToken(code);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogToFile($"ExchangeCodeForToken exception: {ex.Message}");
+                        }
+                        
 
                         string responseString = "<html><h2>Authorization Successful!</h2><p>You can now close this window.</p></html>";
                         OnMessage(this, new SpotifyControllerMessage("Authorization Successful"));
@@ -149,9 +169,9 @@ namespace SpotiHotKey
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                Logger.LogToFile("ListenForAuthResponse exception");
+                Logger.LogToFile($"ListenForAuthResponse exception: {ex.Message}");
             }
         }
 
